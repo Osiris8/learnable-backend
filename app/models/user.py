@@ -1,13 +1,14 @@
+from datetime import datetime
 from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    firstname = db.Column(db.String(128), unique=True, nullable=False)
-    lastname = db.Column(db.String(128), unique=True, nullable=False)
-    email = db.Column(db.String(128), unique=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
-  
+    firstname = db.Column(db.String(50))
+    lastname = db.Column(db.String(50))
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
    
 
     def set_password(self, password):

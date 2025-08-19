@@ -19,46 +19,19 @@ def create_chat():
     if not prompt:
         return jsonify({"error": "Le titre/prompt est requis"}), 400
 
-    # Résumé du prompt par l'IA pour le titre
-    try:
-        ai_summary = ollama_service(
-            f"Résume en quelques mots cette demande de l'utilisateur : {prompt}",
-            model="gemma3:1b"
-        )
-
-        ai_content = ollama_service(prompt, model="gemma3:1b")  # réponse IA principale
-
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
-
-    # Créer le chat avec titre utilisateur et résumé IA
-    chat = Chat(
-        title=prompt,
-        title_ai_summarize=ai_summary,
-        user_id=user_id
-    )
+    # Créer le chat avec le titre utilisateur
+    chat = Chat(title=prompt, user_id=user_id)
     db.session.add(chat)
-    db.session.commit()  # Commit pour obtenir l'ID
+    db.session.commit()  # Commit pour avoir l'ID si besoin
 
-    # Enregistrer le premier message utilisateur
     user_msg = Message(chat_id=chat.id, sender="user", content=prompt)
     db.session.add(user_msg)
-
-    # Enregistrer le premier message de l'IA
-    ai_msg = Message(chat_id=chat.id, sender="ai", content=ai_content)
-    db.session.add(ai_msg)
-
     db.session.commit()
 
     return jsonify({
         "chat_id": chat.id,
         "title": chat.title,
-        "title_ai_summarize": chat.title_ai_summarize,
-        "created_at": chat.created_at,
-        "messages": [
-            {"id": user_msg.id, "sender": user_msg.sender, "content": user_msg.content},
-            {"id": ai_msg.id, "sender": ai_msg.sender, "content": ai_msg.content}
-        ]
+        "created_at": chat.created_at
     }), 201
 
 
@@ -67,7 +40,7 @@ def create_chat():
 def list_chats():
     user_id = get_jwt_identity()
     chats = Chat.query.filter_by(user_id=user_id).all()
-    return jsonify([{"id": c.id, "title": c.title, "title_ai_summarize":c.title_ai_summarize} for c in chats])
+    return jsonify([{"id": c.id, "title": c.title} for c in chats])
 
 @chat_bp.route("/chat/<int:chat_id>", methods=["GET"])
 @jwt_required()

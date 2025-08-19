@@ -6,13 +6,13 @@ def validate_model(model: str):
     """Vérifie que le modèle est autorisé"""
     if model not in OLLAMA_MODELS:
         raise ValueError(f"Modèle non autorisé : {model}")
-def ollama_service(prompt: str, model: str) -> str:
+def ollama_service(content: str, model: str) -> str:
     validate_model(model)
     response_text = ""
     
     stream = chat(
         model=model,
-        messages=[{'role': 'user', 'content': prompt}],
+        messages=[{'role': 'user', 'content': content}],
         stream=True,
     )
 

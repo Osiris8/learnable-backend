@@ -39,7 +39,7 @@ def logout():
 
 
 
-@auth_bp.route('/user', methods=['GET'])
+@auth_bp.route('/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
     user_id = get_jwt_identity()
