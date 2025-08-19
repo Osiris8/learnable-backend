@@ -24,11 +24,11 @@ def send_message(chat_id):
     # Enregistrer le message utilisateur
     user_msg = Message(chat_id=chat_id, sender="user", content=content)
     db.session.add(user_msg)
-    db.session.commit()  # commit pour avoir l'ID
+    db.session.commit()
 
     # Générer la réponse IA via Ollama
     try:
-        ai_content = ollama_service(content, model="gemma3:1b")  # modèle par défaut
+        ai_content = ollama_service(content, model="gemma3:1b")
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -37,9 +37,9 @@ def send_message(chat_id):
     db.session.add(ai_msg)
     db.session.commit()
 
+    # Retourner uniquement la réponse IA pour le frontend
     return jsonify({
-        "user_message": {"id": user_msg.id, "content": user_msg.content},
-        "ai_message": {"id": ai_msg.id, "content": ai_msg.content}
+        "content": ai_msg.content or ""
     }), 201
 
 
