@@ -8,7 +8,7 @@ def validate_model(model: str):
         raise ValueError(f"Modèle non autorisé : {model}")
 def ollama_service(content: str, model: str) -> str:
     validate_model(model)
-    response_text = ""
+    response_text = []
     
     stream = chat(
         model=model,
@@ -19,10 +19,12 @@ def ollama_service(content: str, model: str) -> str:
     for chunk in stream:
         content = chunk['message']['content']
         print(content, end='', flush=True)
-        response_text += content 
+
+        response_text.append(content)
 
     print()
-    return response_text
+  
+    return "".join(response_text)
     content_type="text/plain"
 
     
