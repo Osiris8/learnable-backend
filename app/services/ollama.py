@@ -24,3 +24,5 @@ def ollama_service(content: str, model: str) -> str:
     print()
     return response_text
     content_type="text/plain"
+
+    
