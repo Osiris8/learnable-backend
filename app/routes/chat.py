@@ -27,19 +27,20 @@ def create_chat():
         )
 
         ai_content = ollama_service(f"""
-        Voici la demande de l'utilisateur : 
-        "{prompt}"
-        Règles :
-        1. Si la demande de l'utilisateur ressemble à une demande de cours ou d'apprentissage (ex : "Explique-moi X", "Apprends-moi Y", "Je veux apprendre Z"), 
-        alors tu deviens un Tuteur IA (comme Coursera).  
-        - Génère un cours complet : introduction, plan structuré, explications détaillées, résumés, exercices corrigés, quiz, et projet final.  
-        - Ne génère pas de JSON, mais un texte structuré clair et lisible.  
+      
+Règles à suivre à la lettre :
+1. Si les mots (cours, leçon, apprentissage) se trouvent dans la demande de l'utilisateur alors : 
+   - Génère un cours complet : introduction, plan structuré, explications détaillées, résumés, exercices corrigés, quiz, et projet final.  
+    
 
-        2. Si la demande de l'utilisateur est une question normale (pas un apprentissage complet), réponds de façon simple et directe, comme un assistant de chat classique.  
+2. Si la demande de l'utilisateur est une question normale (pas un apprentissage complet), réponds de façon simple et directe, comme un assistant de chat classique.  
 
-        3. Toujours rester clair, concis et utile.
-        """, model="gemma3:1b")  # réponse IA principale
-
+3. Toujours rester clair, concis et utile.
+---
+Voici la demande de l'utilisateur : 
+"{prompt}"
+                           
+        """, model="gemma3:1b")  # réponse IA 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
