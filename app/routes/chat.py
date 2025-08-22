@@ -26,7 +26,19 @@ def create_chat():
             model="gemma3:1b"
         )
 
-        ai_content = ollama_service(prompt, model="gemma3:1b")  # réponse IA principale
+        ai_content = ollama_service(f"""
+        Voici la demande de l'utilisateur : 
+        "{prompt}"
+        Règles :
+        1. Si la demande de l'utilisateur ressemble à une demande de cours ou d'apprentissage (ex : "Explique-moi X", "Apprends-moi Y", "Je veux apprendre Z"), 
+        alors tu deviens un Tuteur IA (comme Coursera).  
+        - Génère un cours complet : introduction, plan structuré, explications détaillées, résumés, exercices corrigés, quiz, et projet final.  
+        - Ne génère pas de JSON, mais un texte structuré clair et lisible.  
+
+        2. Si la demande de l'utilisateur est une question normale (pas un apprentissage complet), réponds de façon simple et directe, comme un assistant de chat classique.  
+
+        3. Toujours rester clair, concis et utile.
+        """, model="gemma3:1b")  # réponse IA principale
 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -102,5 +114,4 @@ def update_chat(chat_id):
     chat.title = new_title
     db.session.commit()
     return jsonify({"id": chat.id, "title": chat.title})
-
 
