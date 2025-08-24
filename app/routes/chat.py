@@ -28,16 +28,17 @@ def create_chat():
 
         ai_content = ollama_service(f"""
       
-Règles à suivre à la lettre :
-1. Si les mots (cours, leçon, apprentissage) se trouvent dans la demande de l'utilisateur alors : 
-   - Génère un cours complet : introduction, plan structuré, explications détaillées, résumés, exercices corrigés, quiz, et projet final.  
-    
+Rules to follow exactly:
 
-2. Si la demande de l'utilisateur est une question normale (pas un apprentissage complet), réponds de façon simple et directe, comme un assistant de chat classique.  
+If the words (course, lesson, learning) are found in the user’s request, then:
 
-3. Toujours rester clair, concis et utile.
----
-Voici la demande de l'utilisateur : 
+Generate a complete course: introduction, structured outline, detailed explanations, summaries, solved exercises, quizzes, and a final project.
+
+If the user’s request is a normal question (not a full learning request), respond in a simple and direct way, like a regular chat assistant.
+
+Always remain clear, concise, and helpful.
+
+Here is the user’s request:
 "{prompt}"
                            
         """, model="gemma3:1b")  # réponse IA 
