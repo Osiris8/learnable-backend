@@ -1,5 +1,5 @@
 from datetime import datetime
-from turtle import title
+
 from extensions import db
     
 class Chat(db.Model):

@@ -29,7 +29,7 @@ def send_message(chat_id):
     # Générer la réponse IA via Ollama
     try:
         ai_content = ollama_service(
-            f"Envoi ta réponse avec d'espace entre chaque phrase et chaque paragraphe: {content}",
+            f"The user question: {content}",
             model="gemma3:1b"
         )
     except ValueError as e:

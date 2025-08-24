@@ -22,7 +22,7 @@ def create_chat():
     # Résumé du prompt par l'IA pour le titre
     try:
         ai_summary = ollama_service(
-            f"Résume en quelques mots cette demande de l'utilisateur : {prompt}",
+            f"Summarize in 3 words the question of user : {prompt}",
             model="gemma3:1b"
         )
 
@@ -117,3 +117,20 @@ def update_chat(chat_id):
     db.session.commit()
     return jsonify({"id": chat.id, "title": chat.title})
 
+
+@chat_bp.route("/navbar-summaries", methods=["GET"])
+@jwt_required()
+def get_navbar_summaries():
+    user_id = get_jwt_identity() 
+    
+    chats = Chat.query.filter_by(user_id=user_id).order_by(Chat.created_at.desc()).all()
+    
+    summaries = [
+        {
+            "id": chat.id,
+            "title_summary": chat.title_ai_summarize or chat.title
+        }
+        for chat in chats
+    ]
+    
+    return jsonify(summaries)
