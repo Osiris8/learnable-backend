@@ -19,7 +19,7 @@ def create_chat():
     if not prompt:
         return jsonify({"error": "Le titre/prompt est requis"}), 400
 
-    # Résumé du prompt par l'IA pour le titre
+
     try:
         ai_summary = ollama_service(
             f"Summarize in 3 words the question of user : {prompt}",
@@ -41,24 +41,24 @@ Always remain clear, concise, and helpful.
 Here is the user’s request:
 "{prompt}"
                            
-        """, model="gemma3:1b")  # réponse IA 
+        """, model="gemma3:1b") 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
-    # Créer le chat avec titre utilisateur et résumé IA
+    
     chat = Chat(
         title=prompt,
         title_ai_summarize=ai_summary,
         user_id=user_id
     )
     db.session.add(chat)
-    db.session.commit()  # Commit pour obtenir l'ID
+    db.session.commit() 
 
-    # Enregistrer le premier message utilisateur
+
     user_msg = Message(chat_id=chat.id, sender="user", content=prompt)
     db.session.add(user_msg)
 
-    # Enregistrer le premier message de l'IA
+    
     ai_msg = Message(chat_id=chat.id, sender="ai", content=ai_content)
     db.session.add(ai_msg)
 
@@ -99,10 +99,10 @@ def get_chat(chat_id):
 def delete_chat(chat_id):
     chat = Chat.query.get_or_404(chat_id)
 
-    # Supprimer d'abord tous les messages liés
+
     Message.query.filter_by(chat_id=chat.id).delete()
 
-    # Puis supprimer le chat
+    
     db.session.delete(chat)
     db.session.commit()
 
