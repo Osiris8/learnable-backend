@@ -98,9 +98,15 @@ def get_chat(chat_id):
 @jwt_required()
 def delete_chat(chat_id):
     chat = Chat.query.get_or_404(chat_id)
+
+    # Supprimer d'abord tous les messages liés
+    Message.query.filter_by(chat_id=chat.id).delete()
+
+    # Puis supprimer le chat
     db.session.delete(chat)
     db.session.commit()
-    return jsonify({"message": "Chat deleted"})
+
+    return jsonify({"message": "Chat and its messages deleted"})
 
 
 @chat_bp.route("/chat/<int:chat_id>", methods=["PUT"])
