@@ -1,3 +1,4 @@
+
 import os
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -16,7 +17,17 @@ def send_message(chat_id):
     content = data.get("content")
 
     if not content:
-        return jsonify({"error": "Le contenu est requis"}), 400
+        return jsonify({"error": "content is required"}), 400
+    
+
+    allowed_models = os.getenv("OLLAMA_MODELS", "gemma3:1b").split(",")
+
+   
+    model = data.get("model", "gemma3:1b")
+
+   
+    if model not in allowed_models:
+        return jsonify({"error": f"The model '{model}' is not allowed."}), 400
 
    
     chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
@@ -30,7 +41,7 @@ def send_message(chat_id):
     try:
         ai_content = ollama_service(
             f"The user question: {content}",
-            model="gemma3:1b"
+            model=model
         )
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

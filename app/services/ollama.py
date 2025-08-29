@@ -3,9 +3,9 @@ from ollama import chat
 from dotenv import load_dotenv
 OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gemma3:1b").split(",")
 def validate_model(model: str):
-    """Vérifie que le modèle est autorisé"""
+    
     if model not in OLLAMA_MODELS:
-        raise ValueError(f"Modèle non autorisé : {model}")
+        raise ValueError(f"Model is not allowed : {model}")
 def ollama_service(content: str, model: str) -> str:
     validate_model(model)
     response_text = []
