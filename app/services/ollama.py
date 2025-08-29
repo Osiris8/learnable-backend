@@ -5,7 +5,7 @@ OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gemma3:1b").split(",")
 def validate_model(model: str):
     
     if model not in OLLAMA_MODELS:
-        raise ValueError(f"Model is not allowed : {model}")
+        raise ValueError(f"Model {model} is not allowed")
 def ollama_service(content: str, model: str) -> str:
     validate_model(model)
     response_text = []
