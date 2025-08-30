@@ -6,6 +6,7 @@ from app.services.ollama import ollama_service
 from extensions import db
 from app.models.chat import Chat
 from app.models.message import Message
+from app.services.agent import agents
 
 chat_bp = Blueprint("chats", __name__)
 
@@ -16,42 +17,31 @@ def create_chat():
     user_id = get_jwt_identity()
 
     prompt = data.get("title")
-    if not prompt:
-        return jsonify({"error": "The title/prompt is required"}), 400
-    
-    
-    allowed_models = os.getenv("OLLAMA_MODELS", "gemma3:1b").split(",")
-
-   
+    agent_type = data.get("agent", "tutor")
     model = data.get("model", "gemma3:1b")
 
-   
+    if not prompt:
+        return jsonify({"error": "The title/prompt is required"}), 400
+
+    allowed_models = os.getenv("OLLAMA_MODELS", "gemma3:1b").split(",")
     if model not in allowed_models:
         return jsonify({"error": f"The model '{model}' is not allowed."}), 400
 
+    
+    agent_fn = agents.get(agent_type)
+    if not agent_fn:
+        return jsonify({"error": f"Agent '{agent_type}' not found"}), 400
 
     try:
+        
         ai_summary = ollama_service(
             f"Summarize in 3 words the question of user : {prompt}",
             model=model
         )
 
-        ai_content = ollama_service(f"""
-      
-Rules to follow exactly:
+        
+        ai_content = agent_fn(prompt, model)
 
-If the words (course, lesson, learning) are found in the user’s request, then:
-
-Generate a complete course: introduction, structured outline, detailed explanations, summaries, solved exercises, quizzes, and a final project.
-
-If the user’s request is a normal question (not a full learning request), respond in a simple and direct way, like a regular chat assistant.
-
-Always remain clear, concise, and helpful.
-
-Here is the user’s request:
-"{prompt}"
-                           
-        """, model=model) 
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -62,13 +52,11 @@ Here is the user’s request:
         user_id=user_id
     )
     db.session.add(chat)
-    db.session.commit() 
-
+    db.session.commit()
 
     user_msg = Message(chat_id=chat.id, sender="user", content=prompt)
     db.session.add(user_msg)
 
-    
     ai_msg = Message(chat_id=chat.id, sender="ai", content=ai_content)
     db.session.add(ai_msg)
 
@@ -79,6 +67,7 @@ Here is the user’s request:
         "title": chat.title,
         "title_ai_summarize": chat.title_ai_summarize,
         "created_at": chat.created_at,
+        "agent": agent_type,
         "messages": [
             {"id": user_msg.id, "sender": user_msg.sender, "content": user_msg.content},
             {"id": ai_msg.id, "sender": ai_msg.sender, "content": ai_msg.content}
