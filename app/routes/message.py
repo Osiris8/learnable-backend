@@ -6,7 +6,7 @@ from app.services.ollama import ollama_service
 from extensions import db
 from app.models.chat import Chat
 from app.models.message import Message
-
+from app.services.agent import agents
 message_bp = Blueprint("messages", __name__)
 
 @message_bp.route("/chat/<int:chat_id>/messages", methods=["POST"])
@@ -15,6 +15,8 @@ def send_message(chat_id):
     user_id = get_jwt_identity()
     data = request.json
     content = data.get("content")
+    agent_type = data.get("agent", "tutor")
+    model = data.get("model", "gemma3:1b")
 
     if not content:
         return jsonify({"error": "content is required"}), 400
@@ -23,7 +25,7 @@ def send_message(chat_id):
     allowed_models = os.getenv("OLLAMA_MODELS", "gemma3:1b").split(",")
 
    
-    model = data.get("model", "gemma3:1b")
+    
 
    
     if model not in allowed_models:
@@ -37,12 +39,12 @@ def send_message(chat_id):
     db.session.add(user_msg)
     db.session.commit()
 
-   
+    agent_fn = agents.get(agent_type)
+    if not agent_fn:
+        return jsonify({"error": f"Agent '{agent_type}' not found"}), 400
     try:
-        ai_content = ollama_service(
-            f"The user question: {content}",
-            model=model
-        )
+        ai_content = agent_fn(f"The user question: {content}",
+            model=model)
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -53,7 +55,9 @@ def send_message(chat_id):
 
     
     return jsonify({
-        "content": ai_msg.content or ""
+        "content": ai_msg.content or "",
+        "agent": agent_type,
+        "model": model
     }), 201
 
 
