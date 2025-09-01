@@ -49,6 +49,7 @@ def create_chat():
     chat = Chat(
         title=prompt,
         title_ai_summarize=ai_summary,
+        agent=agent_type,
         user_id=user_id
     )
     db.session.add(chat)
@@ -90,6 +91,7 @@ def get_chat(chat_id):
     return jsonify({
         "id": chat.id,
         "title": chat.title,
+        "agent": chat.agent,
         "messages": [{"id": m.id, "sender": m.sender, "content": m.content} for m in messages]
     })
 
