@@ -15,7 +15,7 @@ def send_message(chat_id):
     user_id = get_jwt_identity()
     data = request.json
     content = data.get("content")
-    agent_type = data.get("agent", "tutor")
+    agent_type = data.get("agent", "assistant")
     model = data.get("model", "gemma3:1b")
 
     if not content:

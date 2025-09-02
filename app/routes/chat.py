@@ -17,7 +17,7 @@ def create_chat():
     user_id = get_jwt_identity()
 
     prompt = data.get("title")
-    agent_type = data.get("agent", "tutor")
+    agent_type = data.get("agent", "assistant")
     model = data.get("model", "gemma3:1b")
 
     if not prompt:

@@ -26,10 +26,18 @@ def green_helper_agent(prompt: str, model: str) -> str:
     Prompt: "{prompt}"
     """, model=model)
 
+def assistant_agent(prompt: str, model: str) -> str:
+    return ollama_service(f"""
+    You are a multitasking assistant
+
+    Prompt: "{prompt}"
+    """, model=model)
+
 agents = {
     "tutor": edu_mentor_agent,
     "health": medi_assist_agent,
-    "agriculture": green_helper_agent
+    "agriculture": green_helper_agent,
+    "assistant":assistant_agent
 }
 
 
