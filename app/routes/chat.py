@@ -3,10 +3,11 @@ import asyncio
 from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.ollama import ollama_service
-from extensions import db
+from extensions import db, get_collection
 from app.models.chat import Chat
 from app.models.message import Message
 from app.services.agent import agents
+
 
 chat_bp = Blueprint("chats", __name__)
 
@@ -62,6 +63,26 @@ def create_chat():
     db.session.add(ai_msg)
 
     db.session.commit()
+    collection = get_collection(chat.id)
+    collection.add(
+    documents=[prompt, ai_content],
+    metadatas=[
+        {
+            "sender": "user",
+            "chat_id": chat.id,
+            "created_at": str(user_msg.created_at),
+            "message_id": user_msg.id,
+        },
+        {
+            "sender": "ai",
+            "chat_id": chat.id,
+            "created_at": str(ai_msg.created_at),
+            "message_id": ai_msg.id,
+        },
+    ],
+    ids=[f"user_{user_msg.id}", f"ai_{ai_msg.id}"]  
+    )
+
 
     return jsonify({
         "chat_id": chat.id,
@@ -106,6 +127,16 @@ def delete_chat(chat_id):
     
     db.session.delete(chat)
     db.session.commit()
+
+    try:
+        collection = get_collection(chat.id)
+        
+        collection.delete(where={"chat_id": chat.id})
+        
+       
+    except Exception as e:
+        
+        print(f"Warning: could not delete ChromaDB collection: {e}")
 
     return jsonify({"message": "Chat and its messages deleted"})
 
