@@ -3,10 +3,11 @@ import os
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.ollama import ollama_service
-from extensions import db, get_collection
+from extensions.database import db
 from app.models.chat import Chat
 from app.models.message import Message
 from app.services.agent import agents
+from extensions.chroma import get_collection, embed_text
 message_bp = Blueprint("messages", __name__)
 
 @message_bp.route("/chat/<int:chat_id>/messages", methods=["POST"])
@@ -46,15 +47,21 @@ def send_message(chat_id):
     collection = get_collection(chat_id)
 
     results = collection.query(
-        query_texts=[content],
+        query_embeddings=[embed_text(content)],
         n_results=5
     )
 
-    context = "\n".join(results["documents"][0]) if results["documents"] else ""
+    context = ""
+    if results.get("documents") and len(results["documents"]) > 0:
+        context = "\n".join(results["documents"][0])
 
     try:
-        ai_content = agent_fn(f"The last question of the user : {context} The user question: {content} Answers consistently with history.",
-            model=model)
+        ai_content = agent_fn(
+            f"The last question of the user (context): {context}\n"
+            f"The user question: {content}\n"
+            "Answer consistently with history.",
+            model=model
+        )
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -65,6 +72,7 @@ def send_message(chat_id):
 
     collection.add(
         documents=[content, ai_content],
+        embeddings=[embed_text(content), embed_text(ai_content)],
         metadatas=[
             {
                 "sender": "user",

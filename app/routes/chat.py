@@ -3,10 +3,11 @@ import asyncio
 from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.ollama import ollama_service
-from extensions import db, get_collection
+from extensions.database import db
 from app.models.chat import Chat
 from app.models.message import Message
 from app.services.agent import agents
+from extensions.chroma import get_collection, embed_text
 
 
 chat_bp = Blueprint("chats", __name__)
@@ -66,6 +67,7 @@ def create_chat():
     collection = get_collection(chat.id)
     collection.add(
     documents=[prompt, ai_content],
+    embeddings=[embed_text(prompt), embed_text(ai_content)],
     metadatas=[
         {
             "sender": "user",

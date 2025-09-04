@@ -1,5 +1,5 @@
 from datetime import datetime
-from extensions import db
+from extensions.database import db
     
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
