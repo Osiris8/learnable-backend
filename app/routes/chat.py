@@ -161,7 +161,7 @@ def get_navbar_summaries():
     summaries = [
         {
             "id": chat.id,
-            "title_summary": chat.title_ai_summarize or chat.title
+            "title": chat.title
         }
         for chat in chats
     ]
