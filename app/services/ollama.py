@@ -1,7 +1,7 @@
 import os
 from ollama import chat
 from dotenv import load_dotenv
-OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gemma3:1b").split(",")
+OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gpt-oss:20b").split(",")
 def validate_model(model: str):
     
     if model not in OLLAMA_MODELS:

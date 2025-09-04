@@ -17,20 +17,10 @@ def send_message(chat_id):
     data = request.json
     content = data.get("content")
     agent_type = data.get("agent", "assistant")
-    model = data.get("model", "gemma3:1b")
+    model = data.get("model", "gpt-oss:20b")
 
     if not content:
         return jsonify({"error": "content is required"}), 400
-    
-
-    allowed_models = os.getenv("OLLAMA_MODELS", "gemma3:1b").split(",")
-
-   
-    
-
-   
-    if model not in allowed_models:
-        return jsonify({"error": f"The model '{model}' is not allowed."}), 400
 
    
     chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()

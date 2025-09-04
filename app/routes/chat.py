@@ -20,14 +20,10 @@ def create_chat():
 
     prompt = data.get("title")
     agent_type = data.get("agent", "assistant")
-    model = data.get("model", "gemma3:1b")
+    model = data.get("model", "gpt-oss:20b")
 
     if not prompt:
         return jsonify({"error": "The title/prompt is required"}), 400
-
-    allowed_models = os.getenv("OLLAMA_MODELS", "gemma3:1b").split(",")
-    if model not in allowed_models:
-        return jsonify({"error": f"The model '{model}' is not allowed."}), 400
 
     
     agent_fn = agents.get(agent_type)
