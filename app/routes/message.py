@@ -21,6 +21,9 @@ def send_message(chat_id):
 
     if not content:
         return jsonify({"error": "content is required"}), 400
+    
+
+
 
    
     chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()

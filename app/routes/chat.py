@@ -25,17 +25,14 @@ def create_chat():
     if not prompt:
         return jsonify({"error": "The title/prompt is required"}), 400
 
+ 
+
     
     agent_fn = agents.get(agent_type)
     if not agent_fn:
         return jsonify({"error": f"Agent '{agent_type}' not found"}), 400
 
     try:
-        
-        ai_summary = ollama_service(
-            f"Summarize in 3 words the question of user : {prompt}",
-            model=model
-        )
 
         
         ai_content = agent_fn(prompt, model)
@@ -46,7 +43,7 @@ def create_chat():
     
     chat = Chat(
         title=prompt,
-        title_ai_summarize=ai_summary,
+       
         agent=agent_type,
         user_id=user_id
     )
@@ -85,7 +82,7 @@ def create_chat():
     return jsonify({
         "chat_id": chat.id,
         "title": chat.title,
-        "title_ai_summarize": chat.title_ai_summarize,
+      
         "created_at": chat.created_at,
         "agent": agent_type,
         "messages": [
