@@ -20,6 +20,7 @@ def create_chat():
 
     prompt = data.get("title")
     agent_type = data.get("agent", "assistant")
+    model_type = data.get("model", "gpt-oss:20b")
 
 
     if not prompt:
@@ -37,14 +38,14 @@ def create_chat():
     
     chat = Chat(
         title=prompt,
-       
+        model=model_type,
         agent=agent_type,
         user_id=user_id
     )
     db.session.add(chat)
     db.session.commit()
 
-    user_msg = Message(chat_id=chat.id, sender="user", content=prompt)
+    user_msg = Message(chat_id=chat.id, sender="user", content=prompt, status="pending")
     db.session.add(user_msg)
 
     

@@ -29,7 +29,7 @@ def send_message(chat_id):
     chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
 
    
-    user_msg = Message(chat_id=chat_id, sender="user", content=content)
+    user_msg = Message(chat_id=chat_id, sender="user", content=content, status="done")
     db.session.add(user_msg)
     db.session.commit()
 
@@ -59,7 +59,7 @@ def send_message(chat_id):
         return jsonify({"error": str(e)}), 400
 
 
-    ai_msg = Message(chat_id=chat_id, sender="ai", content=ai_content)
+    ai_msg = Message(chat_id=chat_id, sender="ai", content=ai_content, status="done")
     db.session.add(ai_msg)
     db.session.commit()
 
@@ -89,24 +89,94 @@ def send_message(chat_id):
     }), 201
 
 
+
+
+
+
+
 @message_bp.route("/chat/<int:chat_id>/messages", methods=["GET"])
 @jwt_required()
 def get_messages(chat_id):
+    user_id = get_jwt_identity()
+
+    # Vérifie que le chat appartient à l'utilisateur
+    chat = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
+
+    # Cherche un message pending
+    pending_message = (
+        Message.query
+        .filter_by(chat_id=chat_id, status="pending")
+        .order_by(Message.created_at.asc())
+        .first()
+    )
+
+    if pending_message:
+        content = pending_message.content
+        agent_type = chat.agent
+        model_type = chat.model
+
+        agent_fn = agents.get(agent_type)
+        if not agent_fn:
+            return jsonify({"error": f"Agent '{agent_type}' not found"}), 400
+
+        try:
+            ai_content = agent_fn(
+                f"The user question: {content}\n"
+                "Answer consistently with history.",
+                model=model_type
+            )
+
+            ai_message = Message(
+                chat_id=chat_id,
+                sender="ai",
+                content=ai_content,
+                status="done"
+            )
+            db.session.add(ai_message)
+
+            # Met à jour le message utilisateur en "done"
+            pending_message.status = "done"
+            db.session.commit()
+
+            collection = get_collection(chat.id)
+            collection.add(
+                documents=[content, ai_content],
+                embeddings=[embed_text(content), embed_text(ai_content)],
+                metadatas=[
+                    {
+                        "sender": "user",
+                        "chat_id": chat.id,
+                        "created_at": str(pending_message.created_at),
+                        "message_id": pending_message.id
+                    },
+                    {
+                        "sender": "ai",
+                        "chat_id": chat.id,
+                        "created_at": str(ai_message.created_at),
+                        "message_id": ai_message.id
+                    }
+                ],
+                ids=[f"user_{pending_message.id}", f"ai_{ai_message.id}"]
+            )
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 400
+
+    # Récupère tous les messages après traitement
     messages = (
         Message.query
         .filter_by(chat_id=chat_id)
-        .order_by(Message.created_at.asc()) 
+        .order_by(Message.created_at.asc())
         .all()
     )
+
     return jsonify([
         {
             "id": m.id,
             "sender": m.sender,
             "content": m.content,
+            "status": m.status,
             "created_at": m.created_at.isoformat()
         }
         for m in messages
     ])
-
-
-
