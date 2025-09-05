@@ -163,13 +163,19 @@ def get_messages(chat_id):
             return jsonify({"error": str(e)}), 400
 
     # Récupère tous les messages après traitement
+    else:
+        messages = (
+            Message.query
+            .filter_by(chat_id=chat_id)
+            .order_by(Message.created_at.asc())
+            .all()
+        )
     messages = (
-        Message.query
-        .filter_by(chat_id=chat_id)
-        .order_by(Message.created_at.asc())
-        .all()
-    )
-
+            Message.query
+            .filter_by(chat_id=chat_id)
+            .order_by(Message.created_at.asc())
+            .all()
+        )
     return jsonify([
         {
             "id": m.id,
