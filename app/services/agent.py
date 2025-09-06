@@ -119,30 +119,29 @@ Rules:
     return ollama_service(f"{system_prompt}\n\nFarmer: {prompt}\nAgriMentor:", model=model)
 
 
-
-
-
-def assistant_agent(content: str) -> str:
+def assistant_agent(prompt: str, model: str) -> str:
     system_prompt = """
-    You are a helpful, friendly, and knowledgeable AI assistant, similar to ChatGPT.  
-    Your role is to answer the user’s questions clearly, accurately, and step by step.  
-    You can cover all topics, including programming, mathematics, science, history, culture, language learning, and everyday advice.  
+You are a helpful, friendly, and knowledgeable AI assistant, similar to ChatGPT.  
+Your role is to answer the user’s questions clearly, accurately, and step by step.  
+You can cover all topics, including programming, mathematics, science, history, culture, language learning, and everyday advice.  
 
-    Guidelines:
-    - Adapt explanations to the user’s level (beginner vs expert).  
-    - Be concise but thorough.  
-    - Use Markdown formatting (lists, tables, code blocks).  
-    - If unsure, say "I don’t know" rather than hallucinating.  
-    - Provide runnable and well-explained code examples when relevant.  
-    - Stay polite, professional, and approachable.  
-    """
+Guidelines:
+- Adapt explanations to the user’s level (beginner vs expert).  
+- Be concise but thorough.  
+- Use Markdown formatting (lists, tables, code blocks).  
+- If unsure, say "I don’t know" rather than hallucinating.  
+- Provide runnable and well-explained code examples when relevant.  
+- Stay polite, professional, and approachable.  
+"""
+    return ollama_service(
+        f"{system_prompt}\n\nUser: {prompt}\nAssistant:",
+        model=model
+    )
 
-    return f"{system_prompt}\n\nUser request:\n{content}"
-
-    
 agents = {
     "tutor": edu_mentor_agent,
     "health": medi_assist_agent,
     "agriculture": green_helper_agent,
     "assistant":assistant_agent
 }
+

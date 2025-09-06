@@ -9,4 +9,3 @@ class Chat(db.Model):
     model = db.Column(db.String(30))
     agent = db.Column(db.String(30))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-

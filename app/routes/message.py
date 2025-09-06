@@ -8,56 +8,7 @@ from app.models.chat import Chat
 from app.models.message import Message
 from app.services.agent import agents
 from extensions.chroma import get_collection, embed_text
-from flask import Response, stream_with_context
-from app.services.agent import assistant_agent
-from ollama import chat
 message_bp = Blueprint("messages", __name__)
-
-
-@message_bp.route("/test/<int:chat_id>/messages", methods=["POST"])
-@jwt_required()
-def stream_chat(chat_id):
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    content = data.get("content")
-    model = data.get("model", "gpt-oss:20b")  # modèle par défaut
-    agent_type = data.get("agent", "assistant")
-    agent_fn = agents.get(agent_type)
-
-    if not content:
-        return jsonify({"error": "content is required"}), 400
-    
-    chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
-
-   
-    user_msg = Message(chat_id=chat_id, sender="user", content=content)
-    db.session.add(user_msg)
-    db.session.commit()
-
-  
-
-    def generate():
-        full_response = ""
-        stream = chat(
-            model=model,
-            messages=[{"role": "user", "content": content}],
-            stream=True,
-        )
-        for chunk in stream:
-            piece = chunk["message"]["content"]
-            full_response += piece
-            yield piece  # envoie direct au frontend
-
-        ai_msg = Message(chat_id=chat_id, sender="ai", content=full_response)
-        db.session.add(ai_msg)
-        db.session.commit()
-
-    return Response(stream_with_context(generate()), mimetype="text/plain")
-
-    
-
-
-
 
 @message_bp.route("/chat/<int:chat_id>/messages", methods=["POST"])
 @jwt_required()
@@ -104,17 +55,6 @@ def send_message(chat_id):
             "Answer consistently with history.",
             model=model
         )
-        def generate():
-            stream = chat(
-                model=model,
-                messages=[{"role": "user", "content": content}],
-                stream=True,
-            )
-            for chunk in stream:
-                piece = chunk["message"]["content"]
-                yield piece  # envoie direct au frontend
-
-            return Response(stream_with_context(generate()), mimetype="text/plain")
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -149,26 +89,6 @@ def send_message(chat_id):
     }), 201
 
 
-
-
-
-
-
-   
-
-
-
-
-
-
-
-
-
-
-
-   
-
-
 @message_bp.route("/chat/<int:chat_id>/messages", methods=["GET"])
 @jwt_required()
 def get_messages(chat_id):
@@ -187,7 +107,6 @@ def get_messages(chat_id):
         }
         for m in messages
     ])
-
 
 
 
