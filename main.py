@@ -1,4 +1,5 @@
 
+
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -7,6 +8,7 @@ from config import Config
 from app.routes.auth import auth_bp
 from app.routes.chat import chat_bp
 from app.routes.message import message_bp
+from app.routes.test2 import test_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -17,6 +19,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(chat_bp, url_prefix='/api')
     app.register_blueprint(message_bp, url_prefix='/api')
+    app.register_blueprint(test_bp, url_prefix='/api')
     with app.app_context():
         db.create_all()
 

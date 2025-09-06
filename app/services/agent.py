@@ -144,5 +144,3 @@ agents = {
     "agriculture": green_helper_agent,
     "assistant":assistant_agent
 }
-
-

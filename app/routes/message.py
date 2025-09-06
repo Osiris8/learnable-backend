@@ -94,9 +94,9 @@ def send_message(chat_id):
 
 
 
-@message_bp.route("/chat/<int:chat_id>/messages", methods=["GET"])
+@message_bp.route("/chat/<int:chat_id>/message", methods=["GET"])
 @jwt_required()
-def get_messages(chat_id):
+def get_messages_first_message(chat_id):
     user_id = get_jwt_identity()
 
     # Vérifie que le chat appartient à l'utilisateur
@@ -106,7 +106,6 @@ def get_messages(chat_id):
     pending_message = (
         Message.query
         .filter_by(chat_id=chat_id, status="pending")
-        .order_by(Message.created_at.asc())
         .first()
     )
 
@@ -162,20 +161,14 @@ def get_messages(chat_id):
         except Exception as e:
             return jsonify({"error": str(e)}), 400
 
-    # Récupère tous les messages après traitement
-    else:
-        messages = (
-            Message.query
-            .filter_by(chat_id=chat_id)
-            .order_by(Message.created_at.asc())
-            .all()
-        )
+    # 👉 Toujours retourner tous les messages (même si pas de pending)
     messages = (
-            Message.query
-            .filter_by(chat_id=chat_id)
-            .order_by(Message.created_at.asc())
-            .all()
-        )
+        Message.query
+        .filter_by(chat_id=chat_id)
+        .order_by(Message.created_at.asc())
+        .all()
+    )
+
     return jsonify([
         {
             "id": m.id,
@@ -186,3 +179,40 @@ def get_messages(chat_id):
         }
         for m in messages
     ])
+   
+
+
+
+
+
+
+
+
+
+
+
+   
+
+
+@message_bp.route("/chat/<int:chat_id>/messages", methods=["GET"])
+@jwt_required()
+def get_messages(chat_id):
+    messages = (
+        Message.query
+        .filter_by(chat_id=chat_id)
+        .order_by(Message.created_at.asc()) 
+        .all()
+    )
+    return jsonify([
+        {
+            "id": m.id,
+            "sender": m.sender,
+            "content": m.content,
+            "created_at": m.created_at.isoformat()
+        }
+        for m in messages
+    ])
+
+
+
+
