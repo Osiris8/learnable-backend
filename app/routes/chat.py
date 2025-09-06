@@ -45,7 +45,7 @@ def create_chat():
     db.session.add(chat)
     db.session.commit()
 
-    user_msg = Message(chat_id=chat.id, sender="user", content=prompt, status="pending")
+    user_msg = Message(chat_id=chat.id, sender="user", content=prompt)
     db.session.add(user_msg)
 
     

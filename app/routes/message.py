@@ -8,7 +8,56 @@ from app.models.chat import Chat
 from app.models.message import Message
 from app.services.agent import agents
 from extensions.chroma import get_collection, embed_text
+from flask import Response, stream_with_context
+from app.services.agent import assistant_agent
+from ollama import chat
 message_bp = Blueprint("messages", __name__)
+
+
+@message_bp.route("/test/<int:chat_id>/messages", methods=["POST"])
+@jwt_required()
+def stream_chat(chat_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    content = data.get("content")
+    model = data.get("model", "gpt-oss:20b")  # modèle par défaut
+    agent_type = data.get("agent", "assistant")
+    agent_fn = agents.get(agent_type)
+
+    if not content:
+        return jsonify({"error": "content is required"}), 400
+    
+    chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
+
+   
+    user_msg = Message(chat_id=chat_id, sender="user", content=content)
+    db.session.add(user_msg)
+    db.session.commit()
+
+  
+
+    def generate():
+        full_response = ""
+        stream = chat(
+            model=model,
+            messages=[{"role": "user", "content": content}],
+            stream=True,
+        )
+        for chunk in stream:
+            piece = chunk["message"]["content"]
+            full_response += piece
+            yield piece  # envoie direct au frontend
+
+        ai_msg = Message(chat_id=chat_id, sender="ai", content=full_response)
+        db.session.add(ai_msg)
+        db.session.commit()
+
+    return Response(stream_with_context(generate()), mimetype="text/plain")
+
+    
+
+
+
 
 @message_bp.route("/chat/<int:chat_id>/messages", methods=["POST"])
 @jwt_required()
@@ -29,7 +78,7 @@ def send_message(chat_id):
     chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
 
    
-    user_msg = Message(chat_id=chat_id, sender="user", content=content, status="done")
+    user_msg = Message(chat_id=chat_id, sender="user", content=content)
     db.session.add(user_msg)
     db.session.commit()
 
@@ -55,11 +104,22 @@ def send_message(chat_id):
             "Answer consistently with history.",
             model=model
         )
+        def generate():
+            stream = chat(
+                model=model,
+                messages=[{"role": "user", "content": content}],
+                stream=True,
+            )
+            for chunk in stream:
+                piece = chunk["message"]["content"]
+                yield piece  # envoie direct au frontend
+
+            return Response(stream_with_context(generate()), mimetype="text/plain")
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
 
-    ai_msg = Message(chat_id=chat_id, sender="ai", content=ai_content, status="done")
+    ai_msg = Message(chat_id=chat_id, sender="ai", content=ai_content)
     db.session.add(ai_msg)
     db.session.commit()
 
@@ -94,91 +154,6 @@ def send_message(chat_id):
 
 
 
-@message_bp.route("/chat/<int:chat_id>/message", methods=["GET"])
-@jwt_required()
-def get_messages_first_message(chat_id):
-    user_id = get_jwt_identity()
-
-    # Vérifie que le chat appartient à l'utilisateur
-    chat = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
-
-    # Cherche un message pending
-    pending_message = (
-        Message.query
-        .filter_by(chat_id=chat_id, status="pending")
-        .first()
-    )
-
-    if pending_message:
-        content = pending_message.content
-        agent_type = chat.agent
-        model_type = chat.model
-
-        agent_fn = agents.get(agent_type)
-        if not agent_fn:
-            return jsonify({"error": f"Agent '{agent_type}' not found"}), 400
-
-        try:
-            ai_content = agent_fn(
-                f"The user question: {content}\n"
-                "Answer consistently with history.",
-                model=model_type
-            )
-
-            ai_message = Message(
-                chat_id=chat_id,
-                sender="ai",
-                content=ai_content,
-                status="done"
-            )
-            db.session.add(ai_message)
-
-            # Met à jour le message utilisateur en "done"
-            pending_message.status = "done"
-            db.session.commit()
-
-            collection = get_collection(chat.id)
-            collection.add(
-                documents=[content, ai_content],
-                embeddings=[embed_text(content), embed_text(ai_content)],
-                metadatas=[
-                    {
-                        "sender": "user",
-                        "chat_id": chat.id,
-                        "created_at": str(pending_message.created_at),
-                        "message_id": pending_message.id
-                    },
-                    {
-                        "sender": "ai",
-                        "chat_id": chat.id,
-                        "created_at": str(ai_message.created_at),
-                        "message_id": ai_message.id
-                    }
-                ],
-                ids=[f"user_{pending_message.id}", f"ai_{ai_message.id}"]
-            )
-
-        except Exception as e:
-            return jsonify({"error": str(e)}), 400
-
-    # 👉 Toujours retourner tous les messages (même si pas de pending)
-    messages = (
-        Message.query
-        .filter_by(chat_id=chat_id)
-        .order_by(Message.created_at.asc())
-        .all()
-    )
-
-    return jsonify([
-        {
-            "id": m.id,
-            "sender": m.sender,
-            "content": m.content,
-            "status": m.status,
-            "created_at": m.created_at.isoformat()
-        }
-        for m in messages
-    ])
    
 
 
