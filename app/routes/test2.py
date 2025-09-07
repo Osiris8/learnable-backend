@@ -8,6 +8,7 @@ from extensions.database import db
 from app.models.chat import Chat
 from app.models.message import Message
 from app.services.agent import AGENTS
+from extensions.chroma import get_collection, embed_text
 test_bp = Blueprint("test", __name__)
 
 # Liste des modèles autorisés depuis la variable d'environnement
@@ -37,7 +38,27 @@ def stream_chat(chat_id):
     db.session.add(user_msg)
     db.session.commit()
 
-    system_prompt = AGENTS.get(agent_type)
+    user_msg_data = {
+        "sender": "user",
+        "chat_id": chat_id,
+        "created_at": str(user_msg.created_at),
+        "message_id": user_msg.id
+    }
+
+    collection = get_collection(chat_id)
+
+    results = collection.query(
+        query_embeddings=[embed_text(content)],
+        n_results=5
+    )
+    system_prompt = AGENTS.get(agent_type) or ""
+    context = ""
+    if results.get("documents") and len(results["documents"]) > 0:
+        context = "\n".join(results["documents"][0])
+    if context:
+        system_prompt += f"\n\nContext:\n{context}"
+
+   
 
     def generate():
         full_response = ""
@@ -58,6 +79,34 @@ def stream_chat(chat_id):
         ai_msg = Message(chat_id=chat_id, sender="ai", content=full_response)
         db.session.add(ai_msg)
         db.session.commit()
+
+        db.session.commit()
+        ai_msg_data = {
+            "sender": "ai",
+            "chat_id": chat_id,
+            "created_at": str(ai_msg.created_at),
+            "message_id": ai_msg.id
+        }
+
+        collection.add(
+        documents=[content, full_response],
+        embeddings=[embed_text(content), embed_text(full_response)],
+        metadatas=[
+                {
+                    "sender": "user",
+                    "chat_id": chat_id,
+                    "created_at": user_msg_data["created_at"],
+                    "message_id": user_msg_data["message_id"]
+                },
+                {
+                    "sender": "ai",
+                    "chat_id": chat_id,
+                    "created_at": ai_msg_data["created_at"],
+                    "message_id": ai_msg_data["message_id"]
+                }
+            ],
+            ids=[f"user_{user_msg_data['message_id']}", f"ai_{ai_msg_data['message_id']}"]
+    )
 
     return Response(stream_with_context(generate()), mimetype="text/plain")
 
