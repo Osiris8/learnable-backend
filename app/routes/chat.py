@@ -28,22 +28,14 @@ def create_chat():
  
 
     
-    agent_fn = agents.get(agent_type)
-    if not agent_fn:
-        return jsonify({"error": f"Agent '{agent_type}' not found"}), 400
+   
 
-    try:
-
-        
-        ai_content = agent_fn(prompt, model)
-
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+  
 
     
     chat = Chat(
         title=prompt,
-       
+        model=model,
         agent=agent_type,
         user_id=user_id
     )
@@ -53,14 +45,13 @@ def create_chat():
     user_msg = Message(chat_id=chat.id, sender="user", content=prompt)
     db.session.add(user_msg)
 
-    ai_msg = Message(chat_id=chat.id, sender="ai", content=ai_content)
-    db.session.add(ai_msg)
+   
 
     db.session.commit()
     collection = get_collection(chat.id)
     collection.add(
-    documents=[prompt, ai_content],
-    embeddings=[embed_text(prompt), embed_text(ai_content)],
+    documents=[prompt],
+    embeddings=[embed_text(prompt)],
     metadatas=[
         {
             "sender": "user",
@@ -68,14 +59,9 @@ def create_chat():
             "created_at": str(user_msg.created_at),
             "message_id": user_msg.id,
         },
-        {
-            "sender": "ai",
-            "chat_id": chat.id,
-            "created_at": str(ai_msg.created_at),
-            "message_id": ai_msg.id,
-        },
+       
     ],
-    ids=[f"user_{user_msg.id}", f"ai_{ai_msg.id}"]  
+    ids=[f"user_{user_msg.id}"]  
     )
 
 
@@ -86,8 +72,7 @@ def create_chat():
         "created_at": chat.created_at,
         "agent": agent_type,
         "messages": [
-            {"id": user_msg.id, "sender": user_msg.sender, "content": user_msg.content},
-            {"id": ai_msg.id, "sender": ai_msg.sender, "content": ai_msg.content}
+            {"id": user_msg.id, "sender": user_msg.sender, "content": user_msg.content}
         ]
     }), 201
 

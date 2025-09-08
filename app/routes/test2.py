@@ -80,7 +80,7 @@ def stream_chat(chat_id):
         db.session.add(ai_msg)
         db.session.commit()
 
-        db.session.commit()
+        
         ai_msg_data = {
             "sender": "ai",
             "chat_id": chat_id,
@@ -110,4 +110,77 @@ def stream_chat(chat_id):
 
     return Response(stream_with_context(generate()), mimetype="text/plain")
 
+
+@test_bp.route("/test/<int:chat_id>/first-message", methods=["GET"])
+@jwt_required()
+def stream_chat_first(chat_id):
+    user_id = get_jwt_identity()
+    chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
+    model = chat_obj.model
+    validate_model(model)
+
+    
+
+    
+    agent_type = chat_obj.agent
+    user_msg = Message.query.filter_by(chat_id=chat_id).first_or_404()
+    user_content = user_msg.content
+  
+    collection = get_collection(chat_id)
+
+    system_prompt = AGENTS.get(agent_type) or ""
+  
+   
+
+   
+
+    def generate():
+        full_response = ""
+        stream = chat(
+            model=model,
+            messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content}
+    
+    ],
+            stream=True,
+        )
+        for chunk in stream:
+            piece = chunk["message"]["content"]
+            full_response += piece
+            yield piece  # envoie direct au frontend
+        existing_ai = Message.query.filter_by(chat_id=chat_id, sender="ai").first()
+        if not existing_ai:
+            ai_msg = Message(chat_id=chat_id, sender="ai", content=full_response)
+            db.session.add(ai_msg)
+            db.session.commit()
+           
+        
+
+        
+            ai_msg_data = {
+                "sender": "ai",
+                "chat_id": chat_id,
+                "created_at": str(ai_msg.created_at),
+                "message_id": ai_msg.id
+            }
+
+            collection.add(
+            documents=[full_response],
+            embeddings=[embed_text(full_response)],
+            metadatas=[
+                
+                    {
+                        "sender": "ai",
+                        "chat_id": chat_id,
+                        "created_at": ai_msg_data["created_at"],
+                        "message_id": ai_msg_data["message_id"]
+                    }
+                ],
+                ids=[f"ai_{ai_msg_data['message_id']}"]
+        )
+       
+
+
+    return Response(stream_with_context(generate()), mimetype="text/plain")
 
