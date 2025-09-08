@@ -1,6 +1,6 @@
 AGENTS = {
     "tutor": "You are a tutor",
-    "health": "You are a assistant",
+    "health": "You are a doctor",
     "agriculture": "You are a farmer"
 }
 
