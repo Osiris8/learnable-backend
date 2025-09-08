@@ -1,12 +1,10 @@
 import os
 import asyncio
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.ollama import ollama_service
 from extensions.database import db
 from app.models.chat import Chat
 from app.models.message import Message
-from app.services.agent import agents
 from extensions.chroma import get_collection, embed_text
 
 
@@ -24,14 +22,6 @@ def create_chat():
 
     if not prompt:
         return jsonify({"error": "The title/prompt is required"}), 400
-
- 
-
-    
-   
-
-  
-
     
     chat = Chat(
         title=prompt,
@@ -46,7 +36,6 @@ def create_chat():
     db.session.add(user_msg)
 
    
-
     db.session.commit()
     collection = get_collection(chat.id)
     collection.add(

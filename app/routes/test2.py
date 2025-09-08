@@ -1,5 +1,5 @@
 import os
-from flask import Flask, Blueprint,Response, request, stream_with_context,jsonify
+from flask import Blueprint,Response, request, stream_with_context
 from ollama import chat
 from dotenv import load_dotenv
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -11,7 +11,7 @@ from app.services.agent import AGENTS
 from extensions.chroma import get_collection, embed_text
 test_bp = Blueprint("test", __name__)
 
-# Liste des modèles autorisés depuis la variable d'environnement
+
 OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gemma3:1b").split(",")
 
 
@@ -26,7 +26,7 @@ def stream_chat(chat_id):
     user_id = get_jwt_identity()
     data = request.get_json()
     content = data.get("content")
-    model = data.get("model", OLLAMA_MODELS[0])  # modèle par défaut
+    model = data.get("model", OLLAMA_MODELS[0])
     agent_type = data.get("agent", "assistant")
 
     validate_model(model)
@@ -74,7 +74,7 @@ def stream_chat(chat_id):
         for chunk in stream:
             piece = chunk["message"]["content"]
             full_response += piece
-            yield piece  # envoie direct au frontend
+            yield piece  
 
         ai_msg = Message(chat_id=chat_id, sender="ai", content=full_response)
         db.session.add(ai_msg)
@@ -148,7 +148,7 @@ def stream_chat_first(chat_id):
         for chunk in stream:
             piece = chunk["message"]["content"]
             full_response += piece
-            yield piece  # envoie direct au frontend
+            yield piece  
         existing_ai = Message.query.filter_by(chat_id=chat_id, sender="ai").first()
         if not existing_ai:
             ai_msg = Message(chat_id=chat_id, sender="ai", content=full_response)

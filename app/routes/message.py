@@ -1,8 +1,5 @@
-
-import os
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.services.ollama import ollama_service
 from extensions.database import db
 from app.models.chat import Chat
 from app.models.message import Message
@@ -22,10 +19,6 @@ def send_message(chat_id):
     if not content:
         return jsonify({"error": "content is required"}), 400
     
-
-
-
-   
     chat_obj = Chat.query.filter_by(id=chat_id, user_id=user_id).first_or_404()
 
    
