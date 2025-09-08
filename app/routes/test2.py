@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint,Response, request, stream_with_context
+from flask import Blueprint,Response, request, stream_with_context, jsonify
 from ollama import chat
 from dotenv import load_dotenv
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -184,3 +184,22 @@ def stream_chat_first(chat_id):
 
     return Response(stream_with_context(generate()), mimetype="text/plain")
 
+
+@test_bp.route("/test/<int:chat_id>/messages", methods=["GET"])
+@jwt_required()
+def get_messages(chat_id):
+    messages = (
+        Message.query
+        .filter_by(chat_id=chat_id)
+        .order_by(Message.created_at.asc()) 
+        .all()
+    )
+    return jsonify([
+        {
+            "id": m.id,
+            "sender": m.sender,
+            "content": m.content,
+            "created_at": m.created_at.isoformat()
+        }
+        for m in messages
+    ])
