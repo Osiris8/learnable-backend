@@ -8,6 +8,8 @@ from extensions.chroma import get_collection, embed_text
 
 chat_bp = Blueprint("chats", __name__)
 
+# First user prompt from dashboard
+
 @chat_bp.route("/chat", methods=["POST"])
 @jwt_required()
 def create_chat():
@@ -64,12 +66,6 @@ def create_chat():
     }), 201
 
 
-@chat_bp.route("/chat", methods=["GET"])
-@jwt_required()
-def list_chats():
-    user_id = get_jwt_identity()
-    chats = Chat.query.filter_by(user_id=user_id).all()
-    return jsonify([{"id": c.id, "title": c.title} for c in chats])
 
 @chat_bp.route("/chat/<int:chat_id>", methods=["GET"])
 @jwt_required()
@@ -108,6 +104,8 @@ def delete_chat(chat_id):
     return jsonify({"message": "Chat and its messages deleted"})
 
 
+# Rename Chat(prompt) on dashboard sidebar
+
 @chat_bp.route("/chat/<int:chat_id>", methods=["PUT"])
 @jwt_required()
 def update_chat(chat_id):
@@ -123,6 +121,7 @@ def update_chat(chat_id):
     return jsonify({"id": chat.id, "title": chat.title})
 
 
+# Liste Chat(prompts) on dashboard sidebar
 @chat_bp.route("/navbar-summaries", methods=["GET"])
 @jwt_required()
 def get_navbar_summaries():

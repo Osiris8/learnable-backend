@@ -111,6 +111,7 @@ def stream_chat(chat_id):
     return Response(stream_with_context(generate()), mimetype="text/plain")
 
 
+#Streaming first ai message of first user prompt
 @message_bp.route("/chat/<int:chat_id>/first-message", methods=["GET"])
 @jwt_required()
 def stream_chat_first(chat_id):

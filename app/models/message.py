@@ -6,5 +6,4 @@ class Message(db.Model):
     chat_id = db.Column(db.Integer, db.ForeignKey("chat.id"), nullable=False)
     sender = db.Column(db.String(10))  # "user" or "ai"
     content = db.Column(db.Text)
- 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
