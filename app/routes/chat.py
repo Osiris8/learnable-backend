@@ -118,9 +118,9 @@ def update_chat(chat_id):
     if not new_title:
         return jsonify({"error": "Title is required"}), 400
 
-    chat.title_ai_summarize = new_title
+    chat.title = new_title
     db.session.commit()
-    return jsonify({"id": chat.id, "title": chat.title_ai_summarize})
+    return jsonify({"id": chat.id, "title": chat.title})
 
 
 @chat_bp.route("/navbar-summaries", methods=["GET"])
