@@ -12,7 +12,7 @@ from extensions.chroma import get_collection, embed_text
 message_bp = Blueprint("message", __name__)
 
 
-OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gemma3:1b").split(",")
+OLLAMA_MODELS = os.environ.get("OLLAMA_MODELS", "gpt-oss:20b").split(",")
 
 
 

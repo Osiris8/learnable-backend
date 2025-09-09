@@ -69,7 +69,7 @@ def create_chat():
 def list_chats():
     user_id = get_jwt_identity()
     chats = Chat.query.filter_by(user_id=user_id).all()
-    return jsonify([{"id": c.id, "title": c.title, "title_ai_summarize":c.title_ai_summarize} for c in chats])
+    return jsonify([{"id": c.id, "title": c.title} for c in chats])
 
 @chat_bp.route("/chat/<int:chat_id>", methods=["GET"])
 @jwt_required()
